@@ -1,4 +1,4 @@
-websockets>=12.0
+websockets>=15.0,<16  # 13.x crashes fastmcp startup; 17.x silently kills extension sockets (verified live); 15.0.1 verified end-to-end
 fastmcp>=3.0.0,<4
 uvicorn>=0.31.1
 pydantic>=2.11.7
