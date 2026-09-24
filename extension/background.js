@@ -999,29 +999,20 @@ function stopWebRequestMonitoring() {
     return;
   }
 
-  console.log('🛑 Stopping WebRequest monitoring - removing listeners');
-
-  if (onBeforeRequestListener) {
-    browser.webRequest.onBeforeRequest.removeListener(onBeforeRequestListener);
-    onBeforeRequestListener = null;
-  }
-
-  if (onHeadersReceivedListener) {
-    browser.webRequest.onHeadersReceived.removeListener(onHeadersReceivedListener);
-    onHeadersReceivedListener = null;
-  }
-
-  if (onCompletedListener) {
-    browser.webRequest.onCompleted.removeListener(onCompletedListener);
-    onCompletedListener = null;
-  }
-
-  if (onErrorOccurredListener) {
-    browser.webRequest.onErrorOccurred.removeListener(onErrorOccurredListener);
-    onErrorOccurredListener = null;
-  }
-
-  console.log('✅ WebRequest listeners removed');
+  // The listeners stay registered. Removing them here and re-adding them in
+  // setupWebRequestListeners() on the next start looks symmetric, but on
+  // Firefox 156 a webRequest listener added back after being removed never
+  // fires again: the first stop/start cycle captures normally, and every
+  // monitor started after it reads zero until the extension is reloaded.
+  // Verified live against an authenticated SPA's polling traffic: two monitor
+  // sessions captured reliably, then six consecutive sessions over the same
+  // traffic captured nothing in 8-45 s windows. There is no
+  // webRequest.handlerBehaviorChanged() in MV2 to force a re-registration,
+  // so the listeners are never taken down. The whole cost of leaving them
+  // up is four no-op callbacks per request while nothing is monitored:
+  // handleWebRequestEvent() and captureResponseBody() return immediately
+  // once activeMonitors is empty.
+  console.log('😴 No active monitors - WebRequest listeners kept registered (idle)');
 }
 
 function handleWebRequestEvent(eventType, details) {
